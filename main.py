@@ -1,42 +1,103 @@
+########################
+# Import Libraries
+
 import streamlit as st
 import pandas as pd
+import altair as alt
 
-st.title("Number of foster kids in US over the years")
+########################
+# Page config
+st.set_page_config(
+    page_title="US foster kids",
+    layout="wide"
+)
+alt.themes.enable('dark')
 
-df = pd.read_csv('adoptios_Usa_2013_2022.csv')
+########################
+# Title
 
+st.markdown("<h1 style='text-align: center; '>Foster Kids in US</h1>", unsafe_allow_html=True)
 
+######################## 
+# Load file
+df = pd.read_csv('data/adoptios_Usa_2013_2022.csv')
+df_adopted = pd.read_csv('data/estates_adopteds.csv')
+df_served = pd.read_csv('data/estates_served.csv')
+
+########################
+    # Define format Year and put Year as fixed X
 df["Year"] = pd.to_datetime(df["Year"], format="%Y")
 df.set_index("Year", inplace=True)
 
-st.subheader("National Data")
-st.line_chart(df[['Served', "Adopted"]])
+######################## 
+# Columns
+col = st.columns((2.5,4.5,2.5), gap='medium')
 
-df_adopted = pd.read_csv('estates_adopteds.csv')
-df_served = pd.read_csv('estates_served.csv')
+with col[0]:
+    df.reset_index(inplace=True)
 
-st.subheader("States Data ")
-df_adopted.columns = ['State'] + [col.replace("FY ", "") for col in df_adopted.columns[1:]]
-df_served.columns = ['State'] + [col.replace("FY ", "") for col in df_served.columns[1:]]
+    # Selecionar os dados de 2013 e 2022
+    adopted_2013 = df.loc[df["Year"].dt.year == 2013, "Adopted"].values[0]
+    adopted_2022 = df.loc[df["Year"].dt.year == 2022, "Adopted"].values[0]
 
-selected_states = st.multiselect(
-    "Escolha um ou mais Estados:",
-    options=df_adopted["State"].unique(),
-    default=['Alaska']  
-)
+    # Calcular o crescimento percentual
+    growth_percentage = ((adopted_2022 - adopted_2013) / adopted_2013) * 100
 
-def prepare_state_data(df, states):
-    return df[df["State"].isin(states)].set_index("State").T
+    # Exibir o crescimento percentual usando st.metric
+    st.metric(
+        label="Crescimento Percentual de Adoções",
+        value=f"{adopted_2022}",
+        delta=f"{growth_percentage:.2f}%",
+        delta_color="normal" if growth_percentage > 0 else "red"
+    )
 
-if selected_states:
-    adopted_data = prepare_state_data(df_adopted, selected_states)
-    served_data = prepare_state_data(df_served, selected_states)
+with col[1]:
+    ######################## 
+    # Create Chart
+    st.markdown('''
+    ### Country comparation: Served x Adopted by Year
+    ''')
+    st.line_chart(df[['Served', "Adopted"]])
+    st.markdown('''
+    *Here is showing the difference by the number of foster kids in foster care  
+                 and the number of adoptions that were realised in the entered year from **2013 to 2022** in the US*    
+    ''')
+
+    st.divider()
+
+    ########################
+    # Set Column and Lines
+    st.subheader("States Data ")
+    df_adopted.columns = ['State'] + [col.replace("FY ", "") for col in df_adopted.columns[1:]]
+    df_served.columns = ['State'] + [col.replace("FY ", "") for col in df_served.columns[1:]]
+
+    ######################## 
+    # Create Multiselect
+    selected_states = st.multiselect(
+        "Select one or more states:",
+        options=df_adopted["State"].unique(),
+        default=['Alaska']  
+    )
+
+    ########################
+    # Confire the main page with the usage of multisellect
+    def prepare_state_data(df, states):
+        return df[df["State"].isin(states)].set_index("State").T
+
+    if selected_states:
+        adopted_data = prepare_state_data(df_adopted, selected_states)
+        served_data = prepare_state_data(df_served, selected_states)
+        
+        comparison_data = pd.concat([adopted_data.add_suffix(' (Adopted)'),served_data.add_suffix(' (Served)')], axis=1)
+        
+        comparison_data = comparison_data.sort_index(axis=1)
+        
+        st.subheader("State Comparison: Adopted vs Served by Year")
+        st.bar_chart(comparison_data)
+    else:
+        st.warning("Por favor, selecione pelo menos um estado.")
     
-    comparison_data = pd.concat([adopted_data.add_suffix(' (Adopted)'),served_data.add_suffix(' (Served)')], axis=1)
-    
-    comparison_data = comparison_data.sort_index(axis=1)
-    
-    st.subheader("State Comparison: Adopted vs Served")
-    st.bar_chart(comparison_data)
-else:
-    st.warning("Por favor, selecione pelo menos um estado.")
+    st.markdown('''
+    *Here is showing the difference by the number of foster kids in foster care  
+                 and the number of adoptions that were realised in the entered year from **2013 to 2022** by states in the US*    
+    ''')
