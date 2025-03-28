@@ -17,12 +17,11 @@ alt.themes.enable('dark')
 ########################
 # Title
 
-st.markdown("<h1 style='text-align: center; '>Foster Kids in US</h1>", unsafe_allow_html=True)
-
+st.markdown("<h1 style='text-align: center;'>Children in Foster Care in the United States</h1>", 
+            unsafe_allow_html=True)
 ######################## 
 # Load file
 df = pd.read_csv('data/adoptios_Usa_2013_2022.csv')
-df_age = pd.read_csv('data/age.csv')
 df_adopted = pd.read_csv('data/estates_adopteds.csv')
 df_served = pd.read_csv('data/estates_served.csv')
 
@@ -35,82 +34,38 @@ df.set_index("Year", inplace=True)
 # Columns
 col = st.columns((2.5,4.5,2.5), gap='medium')
 
-with col[0]:
+def nation_kids():
+    st.markdown('''
+    ### National Trends: Children in Foster Care vs. Adopted (2013-2022)
+    ''')
+    st.line_chart(df[['Served', "Adopted"]])
+    
+    
     df.reset_index(inplace=True)
 
     # Selecionar os dados de 2013 e 2022
     adopted_2013 = df.loc[df["Year"].dt.year == 2013, "Adopted"].values[0]
-    adopted_2022 = df.loc[df["Year"].dt.year == 2022, "Adopted"].values[0]
+    adopted_2021 = df.loc[df["Year"].dt.year == 2021, "Adopted"].values[0]
 
     # Calcular o crescimento percentual
-    growth_percentage = ((adopted_2022 - adopted_2013) / adopted_2013) * 100
-
-    # Exibir o crescimento percentual usando st.metric
-    st.metric(
-        label="Crescimento Percentual de Adoções",
-        value=f"{adopted_2022}",
-        delta=f"{growth_percentage:.2f}%",
-        delta_color="normal" if growth_percentage > 0 else "red",
-        border = True,
-        
-    )
-    st.markdown('''
-                *Comparacao de crescimento de 2013 e 2022*
-                ''')
+    growth_percentage = ((adopted_2021 - adopted_2013) / adopted_2013) * 100
     
-    st.divider()
-    
-    ano_selecionado = st.selectbox(
-        "Selecione o ano",
-        options = df_age["Year"],
-        index =0 
-    )
-    
-    dados_ano = df_age[df_age['Year'] == ano_selecionado]
-    
-    faixa_etarias = ['< 1','1 to 5', '6 to 10', '11 to 15', '16 to 20']
-    dados_pizza = dados_ano[faixa_etarias].transpose().reset_index()
-    dados_pizza.columns = ['Faixa Etaria', 'Quantidade']
-    
-    fig = px.pie(
-        dados_pizza,
-        names = 'Faixa Etaria',
-        values = 'Quantidade',
-        title = f'Distirbuicao de Faixa Etaria - {ano_selecionado}',
-        color_discrete_sequence = px.colors.qualitative.Pastel
-    )
-    
-    st.plotly_chart(fig,use_container_width = True)
-with col[1]:
-    ######################## 
-    # Create Chart
-    st.markdown('''
-    ### Country comparation: Served x Adopted by Year
-    ''')
-    st.line_chart(df[['Served', "Adopted"]])
-    st.markdown('''
-    *Here is showing the difference by the number of foster kids in foster care  
-                 and the number of adoptions that were realised in the entered year from **2013 to 2022** in the US*    
+    st.markdown(f'''
+    #### From 2013 to 2022, the adoption rate from foster care increased by :green[↑{growth_percentage:.2f}%] nationally
     ''')
 
-    st.divider()
-
-    ########################
-    # Set Column and Lines
+def states_kids():
     st.subheader("States Data ")
     df_adopted.columns = ['State'] + [col.replace("FY ", "") for col in df_adopted.columns[1:]]
     df_served.columns = ['State'] + [col.replace("FY ", "") for col in df_served.columns[1:]]
 
-    ######################## 
-    # Create Multiselect
+
     selected_states = st.multiselect(
         "Select one or more states:",
         options=df_adopted["State"].unique(),
         default=['Alaska']  
     )
 
-    ########################
-    # Confire the main page with the usage of multisellect
     def prepare_state_data(df, states):
         return df[df["State"].isin(states)].set_index("State").T
 
@@ -127,7 +82,68 @@ with col[1]:
     else:
         st.warning("Por favor, selecione pelo menos um estado.")
     
+    
+def age():
     st.markdown('''
-    *Here is showing the difference by the number of foster kids in foster care  
-                 and the number of adoptions that were realised in the entered year from **2013 to 2022** by states in the US*    
+    ### Key Foster Care Statistics (2021)
     ''')
+    
+    df = pd.DataFrame(
+        {
+            "Year": ["2021"] * 5,  # Repetindo "2021" para cada linha
+            "Age": ['< 1', '1 to 5', '6 to 10', '11 to 15', '16 to 20'],
+            "Number": [28.690, 133.049, 87.383, 86.793, 55.396],
+        }
+    )
+
+    ano = df[df["Year"] == "2021"]
+    
+    data_age = ano[ano["Age"].isin(['< 1', '1 to 5', '6 to 10', '11 to 15', '16 to 20'])][["Age", "Number"]]
+
+    fig = px.pie(
+        data_age,
+        names='Age',
+        values='Number',
+        title='Distribution of age group',
+        color_discrete_sequence=px.colors.qualitative.Pastel
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+def gender():
+    df = pd.DataFrame(
+        {
+            "Year": ["2021"]*2,
+            "Gender": ["Male", "Female"],
+            "Number":[210622,191518],
+        }
+    )
+    
+    ano = df[df["Year"]=='2021']
+    data_gender = ano[ano["Gender"].isin(["Male", "Female"])][["Gender", "Number"]]
+    
+    fig1 = px.pie(
+        data_gender,
+        names='Gender',
+        values='Number',
+        title='Distribution of gender group',
+        color_discrete_sequence=px.colors.qualitative.G10
+    )
+    
+    st.plotly_chart(fig1, use_container_width=True)
+    
+with col[0]:
+    
+    age()
+    gender()
+    
+   
+with col[1]:
+    nation_kids()
+    
+    
+    st.divider()
+
+    states_kids()
+   
+   
