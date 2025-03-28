@@ -77,7 +77,7 @@ with col[0]:
         names = 'Faixa Etaria',
         values = 'Quantidade',
         title = f'Distirbuicao de Faixa Etaria - {ano_selecionado}',
-        color_discrete_sequence = px.colors.qualitative.Pastel,˜
+        color_discrete_sequence = px.colors.qualitative.Pastel
     )
     
     st.plotly_chart(fig,use_container_width = True)
