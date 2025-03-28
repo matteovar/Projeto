@@ -86,7 +86,7 @@ col1, col2, col3 = st.columns(3)
 
 def nation_kids():
     st.markdown('''
-    
+    ### National Trends: Children in Foster Care vs. Adopted (2013-2022)
     ''')
     st.line_chart(df[['Served', "Adopted"]])
 
@@ -121,9 +121,7 @@ def states_kids():
     
     
 def age():
-    st.markdown('''
-    ### National Trends: Children in Foster Care vs. Adopted (2013-2022)
-    ''')
+    
     
     df = pd.DataFrame(
         {
