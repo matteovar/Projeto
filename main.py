@@ -4,6 +4,7 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+import plotly.express as px
 
 ########################
 # Page config
@@ -21,6 +22,7 @@ st.markdown("<h1 style='text-align: center; '>Foster Kids in US</h1>", unsafe_al
 ######################## 
 # Load file
 df = pd.read_csv('data/adoptios_Usa_2013_2022.csv')
+df_age = pd.read_csv('data/age.csv')
 df_adopted = pd.read_csv('data/estates_adopteds.csv')
 df_served = pd.read_csv('data/estates_served.csv')
 
@@ -48,9 +50,37 @@ with col[0]:
         label="Crescimento Percentual de Adoções",
         value=f"{adopted_2022}",
         delta=f"{growth_percentage:.2f}%",
-        delta_color="normal" if growth_percentage > 0 else "red"
+        delta_color="normal" if growth_percentage > 0 else "red",
+        border = True,
+        
     )
-
+    st.markdown('''
+                *Comparacao de crescimento de 2013 e 2022*
+                ''')
+    
+    st.divider()
+    
+    ano_selecionado = st.selectbox(
+        "Selecione o ano",
+        options = df_age["Year"],
+        index =0 
+    )
+    
+    dados_ano = df_age[df_age['Year'] == ano_selecionado]
+    
+    faixa_etarias = ['< 1','1 to 5', '6 to 10', '11 to 15', '16 to 20']
+    dados_pizza = dados_ano[faixa_etarias].transpose().reset_index()
+    dados_pizza.columns = ['Faixa Etaria', 'Quantidade']
+    
+    fig = px.pie(
+        dados_pizza,
+        names = 'Faixa Etaria',
+        values = 'Quantidade',
+        title = f'Distirbuicao de Faixa Etaria - {ano_selecionado}',
+        color_discrete_sequence = px.colors.qualitative.Pastel,˜
+    )
+    
+    st.plotly_chart(fig,use_container_width = True)
 with col[1]:
     ######################## 
     # Create Chart
