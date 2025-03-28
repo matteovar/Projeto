@@ -66,7 +66,7 @@ def cards():
         col_idx = idx % 4
         with cols[col_idx]:
             if row['Delta'] is not None:
-                # Usando st.metric para exibir o valor e a variação percentual
+                # Usando st.metric para exibir o valor e a variação percentuals
                 st.metric(
                     label=row['Label'],
                     value=row['Value'],
